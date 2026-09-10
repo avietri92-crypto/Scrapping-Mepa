@@ -1,19 +1,28 @@
 import requests
 
 url = "https://mepa.it/Mepa/SearchRdo"
-tutti_i_dati = []
 
+def scarica_pagina(skip, take=10):
+    payload = {
+        "Descrizione": "",
+        "FromDate": "",
+        "ToDate": "",
+        "Bookmarks": "false",
+        "Comments": "false",
+        "SortBy": "",
+        "SearchType": "",
+        "LoadOptions[skip]": skip,
+        "LoadOptions[take]": take,
+        "LoadOptions[searchOperation]": "contains",
+    }
+    response = requests.post(url, data=payload)
+    response.raise_for_status()  # solleva errore se la richiesta fallisce
+    return response.json()
+
+tutti_i_dati = []
 skip = 0
-batch_size = 10  # da confermare col Payload
+take = 10
 
 while True:
-    payload = {"skip": skip, "take": batch_size}  # da adattare ai nomi veri
-    response = requests.post(url, json=payload)
-    risultato = response.json()
-
+    risultato = scarica_pagina(skip, take)
     tutti_i_dati.extend(risultato["data"])
-    print(f"Scaricati finora: {len(tutti_i_dati)} / {risultato['totalCount']}")
-
-    if len(tutti_i_dati) >= risultato["totalCount"]:
-        break
-    skip += batch_size
