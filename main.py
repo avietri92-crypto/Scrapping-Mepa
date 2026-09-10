@@ -1,31 +1,19 @@
-from playwright.sync_api import sync_playwright
+import requests
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    context = browser.new_context()
-    page = context.new_page()
+url = "https://mepa.it/Mepa/SearchRdo"
+tutti_i_dati = []
 
-    # stampa ogni richiesta di rete che parte dopo il caricamento iniziale
-    page.on("response", lambda response: print(f"  → risposta: {response.status} {response.url}"))
+skip = 0
+batch_size = 10  # da confermare col Payload
 
-    page.goto("https://mepa.it/home/garemepa")
-    page.locator("#simpleList h4").wait_for()
+while True:
+    payload = {"skip": skip, "take": batch_size}  # da adattare ai nomi veri
+    response = requests.post(url, json=payload)
+    risultato = response.json()
 
-    titoli = page.locator("#simpleList h4")
-    pulsante_altri = page.get_by_role("button", name="mostra altri risultati")
+    tutti_i_dati.extend(risultato["data"])
+    print(f"Scaricati finora: {len(tutti_i_dati)} / {risultato['totalCount']}")
 
-    click_numero = 0
-    while pulsante_altri.is_visible():
-        prima = titoli.count()
-        print(f"--- Click {click_numero + 1} ---")
-        pulsante_altri.click(force=True)   # force=True bypassa controlli di "clickabilità" che potrebbero bloccare silenziosamente
-        page.wait_for_timeout(2000)
-        dopo = titoli.count()
-        click_numero += 1
-        print(f"prima={prima}, dopo={dopo}")
-
-        if dopo == prima and click_numero > 1:
-            print("ATTENZIONE: nessuna nuova richiesta/nuovo conteggio, il click non sta avanzando")
-            break
-        if click_numero > 30:  # sicurezza anti-loop-infinito
-            break
+    if len(tutti_i_dati) >= risultato["totalCount"]:
+        break
+    skip += batch_size
