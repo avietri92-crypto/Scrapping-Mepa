@@ -7,7 +7,7 @@ with sync_playwright() as p:
     page.goto("https://mepa.it/home/garemepa")
 
     titoli = page.locator("#simpleList h4")
-    pulsante_altri = page.locator("text=Mostra altri risultati")  # adatta al selettore reale
+    pulsante_altri = page.locator("text=mostra altri risultati")  # adatta al selettore reale
 
     click_numero = 0
     while pulsante_altri.is_visible():
