@@ -8,7 +8,7 @@ with sync_playwright() as p:
     page.locator("#simpleList").wait_for()
 
 
-    pulsante_altri = page.locator("text=Mostra altri risultati")  # adatta al testo/selettore reale
+    pulsante_altri = page.locator("text=mostra altri risultati")  # adatta al testo/selettore reale
 
     while pulsante_altri.is_visible():
         pulsante_altri.click()
