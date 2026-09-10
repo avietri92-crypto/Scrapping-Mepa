@@ -7,14 +7,18 @@ with sync_playwright() as p:
     page.goto("https://mepa.it/home/garemepa")
     page.locator(".m-t-10").wait_for()
 
+    titoli = page.locator("#simpleList h4")
+    pulsante_altri = page.locator("text=Mostra altri risultati")  # adatta al selettore reale
 
-    pulsante_altri = page.locator("text=mostra altri risultati")  # adatta al testo/selettore reale
-
+    click_numero = 0
     while pulsante_altri.is_visible():
+        prima = titoli.count()
         pulsante_altri.click()
-        page.wait_for_timeout(1000)  # piccola pausa per far caricare i nuovi elementi
+        page.wait_for_timeout(1500)
+        dopo = titoli.count()
+        click_numero += 1
+        print(f"Click {click_numero}: prima={prima}, dopo={dopo}")
 
-    titoli = page.locator(".m-t-10")
-    testi = titoli.all_text_contents()  
-    for t in testi:
-            print(t)
+        if dopo == prima:
+            print("ATTENZIONE: il conteggio non è cresciuto, il click potrebbe non funzionare")
+            break  # evita loop infinito se il problema si ripete sempre
