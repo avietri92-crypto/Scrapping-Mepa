@@ -6,7 +6,7 @@ with sync_playwright() as p:
     page = context.new_page()                       # 3. Page: una scheda dentro il context
 
     page.goto("https://mepa.it/home/garemepa")                # naviga con quella scheda
-    titoli=page.locator(".m-t-10 markkeyw").wait_for()                            
+    titoli=page.locator(".m-t-10").wait_for()                            
     contatore= titoli.count()
     
     for i in range(contatore):
