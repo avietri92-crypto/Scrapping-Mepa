@@ -5,7 +5,6 @@ with sync_playwright() as p:
     context = browser.new_context()                # 2. Context: profilo isolato
     page = context.new_page()                       # 3. Page: una scheda dentro il context
     page.goto("https://mepa.it/home/garemepa")
-    page.locator(".m-t-10").wait_for()
 
     titoli = page.locator("#simpleList h4")
     pulsante_altri = page.locator("text=Mostra altri risultati")  # adatta al selettore reale
