@@ -12,7 +12,7 @@ with sync_playwright() as p:
     page.locator("#simpleList h4").wait_for()
 
     titoli = page.locator("#simpleList h4")
-    pulsante_altri = page.locator("text=mostra altri risultati")
+    pulsante_altri = page.get_by_role("button", name="mostra altri risultati")
 
     click_numero = 0
     while pulsante_altri.is_visible():
