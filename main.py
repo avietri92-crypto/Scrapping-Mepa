@@ -15,7 +15,6 @@ with sync_playwright() as p:
         page.wait_for_timeout(1000)  # piccola pausa per far caricare i nuovi elementi
 
     titoli = page.locator(".m-t-10")
-    contatore = titoli.count()
-
-    for i in range(contatore):
-       print(titoli.nth(i).text_content())
+    testi = titoli.all_text_contents()  
+    for t in testi:
+    print(t)
