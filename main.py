@@ -5,7 +5,7 @@ with sync_playwright() as p:
     context = browser.new_context()                # 2. Context: profilo isolato
     page = context.new_page()                       # 3. Page: una scheda dentro il context
 
-    page.goto("https://example.com")                # naviga con quella scheda
+    page.goto("https://mepa.it/home/garemepa")                # naviga con quella scheda
     print(page.title())                              # legge il titolo della pagina
 
     browser.close()  
