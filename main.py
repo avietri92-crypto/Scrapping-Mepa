@@ -4,18 +4,18 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)   # 1. Browser: avvia Chrome
     context = browser.new_context()                # 2. Context: profilo isolato
     page = context.new_page()                       # 3. Page: una scheda dentro il context
+    page.goto("https://mepa.it/home/garemepa")
+    page.locator("#simpleList").wait_for()
 
-    page.goto("https://mepa.it/home/garemepa")                # naviga con quella scheda
-    pulsante_altri = page.locator("text=mostra altri risultati")  # adatta al testo/selettore reale
+
+    pulsante_altri = page.locator("text=Mostra altri risultati")  # adatta al testo/selettore reale
+
     while pulsante_altri.is_visible():
         pulsante_altri.click()
-        page.wait_for_timeout(1000)
-    titoli=page.locator("#simpleList h4").wait_for() 
+        page.wait_for_timeout(1000)  # piccola pausa per far caricare i nuovi elementi
 
-   
-    contatore= titoli.count()
-    
+    titoli = page.locator("#simpleList h4")
+    contatore = titoli.count()
+
     for i in range(contatore):
-        print(titoli.nth(i).text_content())
-        
-    browser.close()  
+       print(titoli.nth(i).text_content())
