@@ -9,7 +9,7 @@ with sync_playwright() as p:
     page.on("response", lambda response: print(f"  → risposta: {response.status} {response.url}"))
 
     page.goto("https://mepa.it/home/garemepa")
-    page.locator("#simpleList").wait_for()
+    page.locator("#simpleList h4").wait_for()
 
     titoli = page.locator("#simpleList h4")
     pulsante_altri = page.locator("text=mostra altri risultati")
