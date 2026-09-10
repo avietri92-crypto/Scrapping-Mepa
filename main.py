@@ -17,4 +17,4 @@ with sync_playwright() as p:
     titoli = page.locator(".m-t-10")
     testi = titoli.all_text_contents()  
     for t in testi:
-        print(t)
+            print(t)
