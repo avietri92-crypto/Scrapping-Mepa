@@ -8,8 +8,8 @@ with sync_playwright() as p:
     page.goto("https://mepa.it/home/garemepa")                # naviga con quella scheda
     titoli=page.locator(".m-t-10 markkeyw")                             # legge il titolo della pagina
     contatore= titoli.count()
-    i=0
-    for i in range(contatore)
+    
+    for i in range(contatore):
         print(titoli.nth(i))
         
     browser.close()  
