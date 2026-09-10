@@ -6,12 +6,13 @@ with sync_playwright() as p:
     page = context.new_page()                       # 3. Page: una scheda dentro il context
 
     page.goto("https://mepa.it/home/garemepa")                # naviga con quella scheda
+     while pulsante_altri.is_visible():
+        pulsante_altri.click()
+        page.wait_for_timeout(1000)
     titoli=page.locator("#simpleList h4").wait_for() 
     pulsante_altri = page.locator("text=mostra altri risultati")  # adatta al testo/selettore reale
 
-    while pulsante_altri.is_visible():
-    pulsante_altri.click()
-    page.wait_for_timeout(1000)
+   
     contatore= titoli.count()
     
     for i in range(contatore):
