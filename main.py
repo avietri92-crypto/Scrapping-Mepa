@@ -13,20 +13,25 @@ class RequestData(BaseModel):
 
 def _execute_playwright_download(id_bando: str, codice_hash: str):
     with sync_playwright() as p:
-        # Avvia Chromium
+        # Avvia Chromium in modalità Headless
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+        
+        # Maschera il browser da client reale
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            locale="it-IT"
+        )
+        page = context.new_page()
 
         url_bando = f"https://www.acquistinretepa.it/opencms/opencms/scheda_altri_bandi.html?idBando={id_bando}"
         print(f"[LOG] Caricamento URL: {url_bando}")
 
-        # Attende solo il caricamento del DOM per evitare timeout lunghi
-        page.goto(url_bando, wait_until="domcontentloaded", timeout=45000)
+        # 'commit' sblocca subito la pagina non appena riceve la risposta iniziale
+        page.goto(url_bando, wait_until="commit", timeout=30000)
         
-        # Pausa di 3 secondi per permettere ad Angular di generare i token di sessione
-        time.sleep(3)
+        # Attesa di 4 secondi per lasciare spazio all'esecuzione dei cookie/JS di sessione
+        time.sleep(4)
 
-        # Chiamata fetch interna al browser
         script_js = """
         async (hash) => {
             const res = await fetch('https://www.acquistinretepa.it/eproc2/documentaleservices/getDocumento', {
