@@ -13,24 +13,23 @@ class RequestData(BaseModel):
 
 def _execute_playwright_download(id_bando: str, codice_hash: str):
     with sync_playwright() as p:
-        # Avvia Chromium in modalità Headless
         browser = p.chromium.launch(headless=True)
         
-        # Maschera il browser da client reale
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-            locale="it-IT"
+            locale="it-IT",
+            viewport={"width": 1280, "height": 800}
         )
         page = context.new_page()
 
         url_bando = f"https://www.acquistinretepa.it/opencms/opencms/scheda_altri_bandi.html?idBando={id_bando}"
         print(f"[LOG] Caricamento URL: {url_bando}")
 
-        # 'commit' sblocca subito la pagina non appena riceve la risposta iniziale
-        page.goto(url_bando, wait_until="commit", timeout=30000)
+        # Carica la pagina del bando fino al DOM
+        page.goto(url_bando, wait_until="domcontentloaded", timeout=45000)
         
-        # Attesa di 4 secondi per lasciare spazio all'esecuzione dei cookie/JS di sessione
-        time.sleep(4)
+        # Pausa di 6 secondi per consentire l'esecuzione degli script di bootstrap Angular
+        time.sleep(6)
 
         script_js = """
         async (hash) => {
@@ -42,14 +41,24 @@ def _execute_playwright_download(id_bando: str, codice_hash: str):
                 },
                 body: JSON.stringify({ id: hash })
             });
-            return await res.json();
+
+            const text = await res.text();
+            try {
+                return { success: true, data: JSON.parse(text) };
+            } catch (e) {
+                return { success: false, status: res.status, html_snippet: text.substring(0, 500) };
+            }
         }
         """
 
         print("[LOG] Esecuzione fetch getDocumento nel browser...")
-        result_json = page.evaluate(script_js, codice_hash)
+        result = page.evaluate(script_js, codice_hash)
         browser.close()
-        return result_json
+
+        if not result["success"]:
+            raise Exception(f"Il server MePA ha restituito HTML anziché JSON (Status {result['status']}): {result['html_snippet']}")
+
+        return result["data"]
 
 @app.post("/get-pdf")
 async def download_pdf(data: RequestData):
