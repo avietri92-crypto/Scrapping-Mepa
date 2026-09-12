@@ -1,32 +1,35 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
-import asyncio
-from playwright.async_api import async_playwright
-import os
-import uvicorn
+from playwright.sync_api import sync_playwright
+import traceback
+import time
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
-    
 app = FastAPI()
 
 class RequestData(BaseModel):
     idBando: str
     codiceHash: str
 
-@app.post("/get-pdf")
-async def download_pdf(data: RequestData):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        
-        url_bando = f"https://www.acquistinretepa.it/opencms/opencms/scheda_altri_bandi.html?idBando={data.idBando}"
-        await page.goto(url_bando, wait_until="networkidle")
+def _execute_playwright_download(id_bando: str, codice_hash: str):
+    with sync_playwright() as p:
+        # Avvia Chromium
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
+        url_bando = f"https://www.acquistinretepa.it/opencms/opencms/scheda_altri_bandi.html?idBando={id_bando}"
+        print(f"[LOG] Caricamento URL: {url_bando}")
+
+        # Attende solo il caricamento del DOM per evitare timeout lunghi
+        page.goto(url_bando, wait_until="domcontentloaded", timeout=45000)
+        
+        # Pausa di 3 secondi per permettere ad Angular di generare i token di sessione
+        time.sleep(3)
+
+        # Chiamata fetch interna al browser
         script_js = """
         async (hash) => {
-            const response = await fetch('https://www.acquistinretepa.it/eproc2/documentaleservices/getDocumento', {
+            const res = await fetch('https://www.acquistinretepa.it/eproc2/documentaleservices/getDocumento', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json;charset=UTF-8',
@@ -34,11 +37,26 @@ async def download_pdf(data: RequestData):
                 },
                 body: JSON.stringify({ id: hash })
             });
-            return await response.json();
+            return await res.json();
         }
         """
-        result_json = await page.evaluate(script_js, data.codiceHash)
-        await browser.close()
+
+        print("[LOG] Esecuzione fetch getDocumento nel browser...")
+        result_json = page.evaluate(script_js, codice_hash)
+        browser.close()
         return result_json
 
-# Per avviarlo: uvicorn main:app --reload --port 8000
+@app.post("/get-pdf")
+async def download_pdf(data: RequestData):
+    try:
+        # Esegue la funzione Playwright in un thread separato gestito da FastAPI
+        result = await run_in_threadpool(
+            _execute_playwright_download, 
+            data.idBando, 
+            data.codiceHash
+        )
+        return result
+    except Exception as e:
+        print("[ERROR] Errore durante il processo:")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
